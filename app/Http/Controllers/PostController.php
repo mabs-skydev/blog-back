@@ -17,11 +17,13 @@ class PostController extends Controller
      */
     public function index()
     {
-        $posts = Post::with(['users', 'comments.users'])->latest()->get();
+        $posts = Post::with(['user', 'comments.user'])
+            ->latest()
+            ->get();
 
-        return json()->response([
-            'success'   =>  true,
-            'posts'     =>  $posts
+        return response()->json([
+            'success' => true,
+            'posts' => $posts,
         ]);
     }
 
@@ -36,20 +38,26 @@ class PostController extends Controller
         $validator = Validator::make($request->all(), [
             'body' => 'required',
         ]);
-   
-        if($validator->fails()){
-            return response()->json([
-                'success'   => false,
-                'errors'   => $validator->errors()
-            ], 400);     
+
+        if ($validator->fails()) {
+            return response()->json(
+                [
+                    'success' => false,
+                    'errors' => $validator->errors(),
+                ],
+                400
+            );
         }
-        
-        $post = auth()->user()->posts()->create($validator->validated());
+
+        $post = auth()
+            ->user()
+            ->posts()
+            ->create($validator->validated());
 
         return response()->json([
-            'success'   => true,
-            'post'   => $post
-        ]);  
+            'success' => true,
+            'post' => $post->load('user', 'comments.user'),
+        ]);
     }
 
     /**
@@ -61,8 +69,8 @@ class PostController extends Controller
     public function show(Post $post)
     {
         return response()->json([
-            'success'   => true,
-            'post'      =>  $post,
+            'success' => true,
+            'post' => $post->load('user'),
         ]);
     }
 
@@ -78,20 +86,23 @@ class PostController extends Controller
         $validator = Validator::make($request->all(), [
             'body' => 'required',
         ]);
-   
-        if($validator->fails()){
-            return response()->json([
-                'success'   => false,
-                'errors'   => $validator->errors()
-            ], 400);     
+
+        if ($validator->fails()) {
+            return response()->json(
+                [
+                    'success' => false,
+                    'errors' => $validator->errors(),
+                ],
+                400
+            );
         }
-        
+
         $post->update($validator->validated());
 
         return response()->json([
-            'success'   => true,
-            'post'   => $post
-        ]);  
+            'success' => true,
+            'post' => $post->load('user'),
+        ]);
     }
 
     /**
@@ -102,18 +113,25 @@ class PostController extends Controller
      */
     public function destroy(Post $post)
     {
-        if (auth()->user()->cannot('delete', $post)) {
-            return response()->json([
-                'success'   => false,
-                'message'   => 'Unauthorized.'
-            ], 403); 
+        if (
+            auth()
+                ->user()
+                ->cannot('delete', $post)
+        ) {
+            return response()->json(
+                [
+                    'success' => false,
+                    'message' => 'Unauthorized.',
+                ],
+                403
+            );
         }
 
         $post->delete();
 
         return response()->json([
-            'success'   => true,
-            'post'      =>  $post,
+            'success' => true,
+            'post' => $post,
         ]);
     }
 
@@ -128,24 +146,27 @@ class PostController extends Controller
         $validator = Validator::make($request->all(), [
             'body' => 'required',
         ]);
-   
-        if($validator->fails()){
-            return response()->json([
-                'success'   => false,
-                'errors'   => $validator->errors()
-            ], 400);     
+
+        if ($validator->fails()) {
+            return response()->json(
+                [
+                    'success' => false,
+                    'errors' => $validator->errors(),
+                ],
+                400
+            );
         }
-        
+
         $comment = Comment::create([
-            'user_id'   =>  auth()->id(),
-            'post_id'   =>  $post->id,
-            'body'      =>  $request->body
+            'user_id' => auth()->id(),
+            'post_id' => $post->id,
+            'body' => $request->body,
         ]);
 
         return response()->json([
-            'success'   => true,
-            'comment'   => $comment
-        ]);  
+            'success' => true,
+            'comment' => $comment->load('user'),
+        ]);
     }
 
     /**
@@ -156,18 +177,25 @@ class PostController extends Controller
      */
     public function destroyComment(Comment $comment)
     {
-        if (auth()->user()->cannot('delete', $comment)) {
-            return response()->json([
-                'success'   => false,
-                'message'   => 'Unauthorized.'
-            ], 403); 
+        if (
+            auth()
+                ->user()
+                ->cannot('delete', $comment)
+        ) {
+            return response()->json(
+                [
+                    'success' => false,
+                    'message' => 'Unauthorized.',
+                ],
+                403
+            );
         }
 
         $comment->delete();
 
         return response()->json([
-            'success'   => true,
-            'comment'      =>  $comment,
+            'success' => true,
+            'comment' => $comment,
         ]);
     }
 }
