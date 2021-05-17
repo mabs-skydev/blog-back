@@ -12,7 +12,7 @@ class PostController extends Controller
 {
     /**
      * Display a listing of the resource.
-     *
+     * test chanegs
      * @return \Illuminate\Http\Response
      */
     public function index()
